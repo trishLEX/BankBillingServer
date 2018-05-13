@@ -1,9 +1,9 @@
-package ru.bmstu.BankBillingServer.AccountRegistration;
+package ru.bmstu.BankBillingServer.AccountManagement;
 
-public class AccountMessage {
+public class GetBalanceMessage {
     private int accountID;
 
-    public AccountMessage(int accountID) {
+    public GetBalanceMessage(int accountID) {
         this.accountID = accountID;
     }
 
