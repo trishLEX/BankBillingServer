@@ -13,7 +13,7 @@ class ServerTest {
     private static final String DELETE = "DELETE";
 
     @Test
-    public void doTests() throws UnsupportedEncodingException {
+    public void doTests() {
         createAccount(1);
         deposit(1, 1.5f);
         withdraw(1, 1.5f);
