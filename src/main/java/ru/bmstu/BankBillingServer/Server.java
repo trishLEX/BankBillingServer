@@ -28,7 +28,6 @@ import ru.bmstu.BankBillingServer.Put.WithdrawMessage;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -131,7 +130,7 @@ public class Server {
 
     private Route createAccountRoute(int accountID) {
         return path(integerSegment(), (Integer id) -> {
-            if (accountID != id)
+            if (accountID != id || String.valueOf(accountID).length() > 5)
                 return complete(StatusCodes.BAD_REQUEST, "wrong id");
             else {
                 CompletableFuture<StatusCode> result = PatternsCS.ask(
@@ -160,7 +159,7 @@ public class Server {
 
     private Route depositRoute(int accountID, int id, float sum) {
         return path("deposit", () -> {
-            if (accountID != id)
+            if (accountID != id || String.valueOf(accountID).length() > 5)
                 return complete(StatusCodes.BAD_REQUEST, "wrong id");
             else {
                 CompletableFuture<StatusCode> result = PatternsCS.ask(
@@ -180,7 +179,7 @@ public class Server {
 
     private Route withdrawRoute(int accountID, int id, float sum) {
         return path("withdraw", () -> {
-            if (accountID != id)
+            if (accountID != id || String.valueOf(accountID).length() > 5)
                 return complete(StatusCodes.BAD_REQUEST, "wrong id");
             else {
                 CompletableFuture<StatusCode> result = PatternsCS.ask(
@@ -201,7 +200,7 @@ public class Server {
     private Route getBalanceRoute(int accountID) {
         return pathPrefix(integerSegment(), (Integer id) ->
                 path("balance", () -> {
-                    if (accountID != id)
+                    if (accountID != id || String.valueOf(accountID).length() > 5)
                         return complete(StatusCodes.BAD_REQUEST, "wrong id");
                     else {
                         CompletableFuture<Double> result = PatternsCS.ask(
@@ -235,7 +234,7 @@ public class Server {
     private Route deleteRoute(int accountID) {
         return pathPrefix(integerSegment(), (Integer id) ->
                 path("delete", () -> {
-                    if (accountID != id)
+                    if (accountID != id || String.valueOf(accountID).length() > 5)
                         return complete(StatusCodes.BAD_REQUEST, "wrong id");
                     else {
                         CompletableFuture<StatusCode> result = PatternsCS.ask(
