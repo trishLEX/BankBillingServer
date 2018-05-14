@@ -10,14 +10,18 @@ import java.util.HashMap;
 import java.util.List;
 
 public class GetActor extends AbstractActor {
+    private static final String ACCOUNTS = "accounts";
+
     @Override
     public Receive createReceive() {
         return ReceiveBuilder.create()
                 .match(GetBalanceMessage.class, msg ->
                         getBalance(msg.getAccountID())
                 )
-                .match(String.class, msh ->
-                        getAccounts()
+                .match(String.class, msg -> {
+                            if (msg.equals(ACCOUNTS))
+                                getAccounts();
+                        }
                 )
                 .build();
     }
