@@ -72,8 +72,8 @@ billingdb.billing_schema.accounts (
   money FLOAT NOT NULL CHECK (money >= 0) DEFAULT 0  
 );
 4. Для работы из Intellij Idea необходимо добавить базу данных BillingDB в DataSources.
-5. В файле hibernate.cfg.xml в свойствах username и password прописать валидные имя пользователя и пароль к базе данных.
-6. В файле hibernate.cfg.xml в свойсте url прописать строку соединения для бызы данных.
+5. В файле resources/hibernate.cfg.xml в свойствах username и password прописать валидные имя пользователя и пароль к базе данных.
+6. В файле resources/hibernate.cfg.xml в свойсте url прописать строку соединения для бызы данных.
 7. Запуск производится из файла Server.java (там находится main, который поднимает сервер).
 8. Тесты находятся в tests/ru/bmstu/BankBillingServer/ServerTest. Сделано интуитивное API для тестирования сервера. 
 
