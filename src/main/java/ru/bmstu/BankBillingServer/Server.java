@@ -7,6 +7,7 @@ import akka.actor.Props;
 import akka.http.javadsl.ConnectHttp;
 import akka.http.javadsl.Http;
 import akka.http.javadsl.ServerBinding;
+import akka.http.javadsl.marshallers.jackson.Jackson;
 import akka.http.javadsl.model.HttpRequest;
 import akka.http.javadsl.model.HttpResponse;
 import akka.http.javadsl.model.StatusCode;
@@ -15,10 +16,19 @@ import akka.http.javadsl.server.Route;
 import akka.pattern.PatternsCS;
 import akka.stream.ActorMaterializer;
 import akka.stream.javadsl.Flow;
-import ru.bmstu.BankBillingServer.AccountManagement.*;
-import ru.bmstu.BankBillingServer.BillingDB.BillingDB;
+import ru.bmstu.BankBillingServer.Delete.DeleteAccountMessage;
+import ru.bmstu.BankBillingServer.Delete.DeleteActor;
+import ru.bmstu.BankBillingServer.Get.GetActor;
+import ru.bmstu.BankBillingServer.Get.GetBalanceMessage;
+import ru.bmstu.BankBillingServer.Post.CreateAccountMessage;
+import ru.bmstu.BankBillingServer.Post.PostActor;
+import ru.bmstu.BankBillingServer.Put.DepositMessage;
+import ru.bmstu.BankBillingServer.Put.PutActor;
+import ru.bmstu.BankBillingServer.Put.WithdrawMessage;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
@@ -33,8 +43,19 @@ public class Server {
 
     private static final int TIMEOUT_MILLIS = 5000;
 
-    private ActorRef billingDB;
-    private static final String BILLING_DB_ACTOR = "billingDB";
+    private ActorRef getActor;
+    private static final String GET_ACTOR = "getActor";
+
+    private ActorRef postActor;
+    private static final String POST_ACTOR = "postActor";
+
+    private ActorRef putActor;
+    private static final String PUT_ACTOR = "putActor";
+
+    private ActorRef deleteActor;
+    private static final String DELETE_ACTOR = "deleteActor";
+
+    private static final String ACCOUNTS = "accounts";
 
     public static void main(String[] args) throws IOException {
         Logger log = Logger.getLogger("Logger");
@@ -63,7 +84,10 @@ public class Server {
     }
 
     private Server(final ActorSystem system) {
-        this.billingDB = system.actorOf(Props.create(BillingDB.class), BILLING_DB_ACTOR);
+        this.getActor = system.actorOf(Props.create(GetActor.class), GET_ACTOR);
+        this.postActor = system.actorOf(Props.create(PostActor.class), POST_ACTOR);
+        this.putActor = system.actorOf(Props.create(PutActor.class), PUT_ACTOR);
+        this.deleteActor = system.actorOf(Props.create(DeleteActor.class), DELETE_ACTOR);
     }
 
     private Route createRoute() {
@@ -84,10 +108,14 @@ public class Server {
                                 )
                         )
                 ),
-                get(() ->
+                get(() -> route(
                         parameter("id", accountID ->
                                 pathPrefix("bankaccount", () ->
                                         getBalanceRoute(Integer.parseInt(accountID))
+                                )
+                        ),
+                        path("bankaccount", () ->
+                                        getBalanceRoute()
                                 )
                         )
                 ),
@@ -107,7 +135,7 @@ public class Server {
                 return complete(StatusCodes.BAD_REQUEST, "wrong id");
             else {
                 CompletableFuture<StatusCode> result = PatternsCS.ask(
-                        billingDB,
+                        postActor,
                         new CreateAccountMessage(id), TIMEOUT_MILLIS)
                         .toCompletableFuture()
                         .thenApply((StatusCode.class::cast));
@@ -136,7 +164,7 @@ public class Server {
                 return complete(StatusCodes.BAD_REQUEST, "wrong id");
             else {
                 CompletableFuture<StatusCode> result = PatternsCS.ask(
-                        billingDB,
+                        putActor,
                         new DepositMessage(id, sum), TIMEOUT_MILLIS)
                         .toCompletableFuture()
                         .thenApply((StatusCode.class::cast));
@@ -156,7 +184,7 @@ public class Server {
                 return complete(StatusCodes.BAD_REQUEST, "wrong id");
             else {
                 CompletableFuture<StatusCode> result = PatternsCS.ask(
-                        billingDB,
+                        putActor,
                         new WithdrawMessage(id, sum), TIMEOUT_MILLIS)
                         .toCompletableFuture()
                         .thenApply((StatusCode.class::cast));
@@ -177,13 +205,13 @@ public class Server {
                         return complete(StatusCodes.BAD_REQUEST, "wrong id");
                     else {
                         CompletableFuture<Double> result = PatternsCS.ask(
-                                billingDB,
+                                getActor,
                                 new GetBalanceMessage(id), TIMEOUT_MILLIS)
                                 .toCompletableFuture()
                                 .thenApply((Double.class::cast));
                         try {
                             Double balance = result.get();
-                            if (balance == null)
+                            if (balance < 0)
                                 return complete(StatusCodes.BAD_REQUEST);
                             else
                                 return complete(balance.toString());
@@ -196,6 +224,14 @@ public class Server {
         );
     }
 
+    private Route getBalanceRoute() {
+        CompletableFuture<HashMap<Integer, Double>> result = PatternsCS.ask(getActor, ACCOUNTS, TIMEOUT_MILLIS)
+                .toCompletableFuture()
+                .thenApply((HashMap.class::cast));
+
+        return completeOKWithFuture(result, Jackson.marshaller());
+    }
+
     private Route deleteRoute(int accountID) {
         return pathPrefix(integerSegment(), (Integer id) ->
                 path("delete", () -> {
@@ -203,7 +239,7 @@ public class Server {
                         return complete(StatusCodes.BAD_REQUEST, "wrong id");
                     else {
                         CompletableFuture<StatusCode> result = PatternsCS.ask(
-                                billingDB,
+                                deleteActor,
                                 new DeleteAccountMessage(id), TIMEOUT_MILLIS)
                                 .toCompletableFuture()
                                 .thenApply((StatusCode.class::cast));

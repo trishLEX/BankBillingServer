@@ -1,4 +1,4 @@
-package ru.bmstu.BankBillingServer.AccountManagement;
+package ru.bmstu.BankBillingServer.Post;
 
 public class CreateAccountMessage {
     private int accountID;

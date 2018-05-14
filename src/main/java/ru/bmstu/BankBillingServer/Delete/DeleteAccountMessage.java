@@ -1,4 +1,4 @@
-package ru.bmstu.BankBillingServer.AccountManagement;
+package ru.bmstu.BankBillingServer.Delete;
 
 public class DeleteAccountMessage {
     private int accountID;

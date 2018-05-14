@@ -1,4 +1,4 @@
-package ru.bmstu.BankBillingServer.AccountManagement;
+package ru.bmstu.BankBillingServer.Put;
 
 public class DepositMessage {
     private int accountID;
